@@ -8,7 +8,9 @@ import os, sys,random
 from collections import deque
 from sklearn.metrics import r2_score,mean_squared_error
 from scipy.stats.stats import pearsonr
-from model import Model_Attention_221029 as net
+# from model import Model_Attention_221029 as net
+from model_compGPT import GPT3Decoder as net
+
 import re, csv
 import itertools
 
@@ -27,19 +29,22 @@ import time
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 params = {'batch_size': 128,
           'shuffle': True,
-          'num_workers': 8,
+          'num_workers': 0,
           'pin_memory':True}
 val_params = {'batch_size': 128,
               'shuffle': True,
               'num_workers': 8,
             #   'drop_last':True,
               'pin_memory':True}
-LEARNING_RATE = 1e-3
+LEARNING_RATE = 1e-6
 
 def dataset(train_date_till,test_date_from):
     folder = './data/transformed_data/'
     df_x = pd.read_csv(folder+'data_x_transformed.csv')
+    df_x = df_x.drop(columns=['cashPerShare'])
+    
     df_target = pd.read_csv(folder+'data_y_transformed.csv')
+    
     
     ### For Testing
     # df_x = df_x[df_x['symbol']=='BAC']
@@ -53,8 +58,8 @@ def dataset(train_date_till,test_date_from):
     df_target_train = df_target[df_target['date']<train_date_till].copy()
     df_x_test = df_x[df_x['date']>=test_date_from].copy()
     df_target_test = df_target[df_target['date']>=test_date_from].copy()
-    dataset_train = Custom_dataset_220919(df_x=df_x_train,df_y=df_target_train,window=12,target_col='TR_750d_rank')
-    dataset_test = Custom_dataset_220919(df_x=df_x_test,df_y=df_target_test,window=12,target_col='TR_750d_rank')
+    dataset_train = Custom_dataset_220919(df_x=df_x_train,df_y=df_target_train,window=12,target_col='TR_750d_noshift_rank')
+    dataset_test = Custom_dataset_220919(df_x=df_x_test,df_y=df_target_test,window=12,target_col='TR_750d_noshift_rank')
     return dataset_train,dataset_test
 def dataloader(dataset_train, dataset_test, params, val_params):
     train_loader = data.DataLoader(dataset_train, **params)
@@ -65,14 +70,21 @@ def train_one_epoch(model,train_loader,device):
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
     for i, (x, y) in enumerate(train_loader):
-        optimizer.zero_grad()
-        y = y.unsqueeze(1)
-        y_pred = model(x)
-        loss = F.mse_loss(y_pred, y)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        print(i,"loss:", loss.item())
+        if i < 100: #limit steps for each epoch 
+            optimizer.zero_grad()
+            y = y.unsqueeze(1).float()
+            y_pred = model(x)
+            loss = F.mse_loss(y_pred, y)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            print(f"{i}/{len(train_loader)} loss: {loss.item()}")
+            if i % 50 == 0:
+                print("y_pred:", y_pred)
+        else:
+            break
+
     return model,loss
 def evaluate_one_epoch(model,val_loader,device):
     model.eval()
@@ -83,6 +95,9 @@ def evaluate_one_epoch(model,val_loader,device):
             y_pred = model(x)
             loss = F.mse_loss(y_pred, y)
             print("evaluate: ", i,loss.item())
+            print("y_pred_eval:", y_pred)
+        else:
+            break
     return model,loss
 def main(folder_saved_model = './saved_model/'):
     '''
@@ -100,13 +115,13 @@ def main(folder_saved_model = './saved_model/'):
 
     ### Prepare Data Loaders
     dataset_train, dataset_test = dataset(train_date_till='2018-01-01',test_date_from='2018-01-01')
-    datalaoder_train, dataloader_test = dataloader(dataset_train, dataset_test,1 params, val_params)
+    datalaoder_train, dataloader_test = dataloader(dataset_train, dataset_test,params, val_params)
     print(f"train: {len(dataset_train)} test: {len(dataset_test)}")
 
     ### Train Model
     best_loss_val = np.inf
-    model = net(in_shape=dataset_train[0][0].shape,out_shape=1).to(device)
-
+    # model = net(in_shape=dataset_train[0][0].shape,out_shape=1,num_heads=4).to(device)
+    model = net(d_model=dataset_train[0][0].shape[1],num_layers=6, num_heads=4, d_ff=2048, dropout=0.1).to(device) #d_model = 12, num_token = 53
     try:
         model.load_state_dict(torch.load(folder_saved_model+'model.pth'))
         print("model loaded")
@@ -127,7 +142,7 @@ def main(folder_saved_model = './saved_model/'):
             print('model saved')
 
 if __name__ == '__main__':
-    folder_saved_model = './saved_model/221129/'
+    folder_saved_model = './saved_model/230602_GPT_noshift/'
     main(folder_saved_model=folder_saved_model)
     # dataset(train_date_till='2018-01-01',test_date_from='2018-01-01')
 # dataset_train, dataset_test = dataset(train_date_till='2020-01-01',test_date_from='2020-01-01')

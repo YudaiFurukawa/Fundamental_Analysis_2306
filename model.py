@@ -551,7 +551,7 @@ class Model_Attention_221029(nn.Module):
     '''
     Simple fully connected neural network 
     '''
-    def __init__(self, in_shape, out_shape=1, hidden=[256],dropout=0.5,output_attention_weight=False):  # 256-128-16 dropout0.5
+    def __init__(self, in_shape, out_shape=1, hidden=[256],dropout=0.5,output_attention_weight=False,num_heads=1):  # 256-128-16 dropout0.5
         super().__init__()
         # print(in_shape)
         # Todo This is the way to make layers dynamic
@@ -608,6 +608,70 @@ class Model_Attention_221029(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Linear):
                 print(m.weight)
+class Model_Attention_221029_float(nn.Module):
+    '''
+    Simple fully connected neural network 
+    '''
+    def __init__(self, in_shape, out_shape=1, hidden=[256],dropout=0.5,output_attention_weight=False,num_heads=1):  # 256-128-16 dropout0.5
+        super().__init__()
+        # print(in_shape)
+        # Todo This is the way to make layers dynamic
+        # https://www.youtube.com/watch?v=DkNIBBBvcPs
+        # Self Attention
+        # https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/tutorial6/Transformers_and_MHAttention.html
+        
+        ### Parameters
+        self.dropout_rate = dropout
+        self.output_attention_weight = output_attention_weight
+
+        ### Hidden laters
+        self.inshape = in_shape
+        self.in_shape_flatten = in_shape[0] * in_shape[1] 
+        self.layers = self._make_layer(self.in_shape_flatten, out_shape,hidden)
+        self.activation = nn.Tanh()
+
+        # # Attention layer
+        self.self_attn = MultiheadAttention(in_shape[1], num_heads=1,batch_first=True)
+
+        ### Others
+        self.reset_parameters()
+    def forward(self,x):
+        x, attention_weight = self.self_attn(x,x,x)
+        x = torch.flatten(x, 1)
+        h = self.layers(x)
+        h = self.activation(h)
+        if self.output_attention_weight:
+            return h.float(), attention_weight
+        else:
+            return h.float()
+    def _make_layer(self, in_shape, out_shape, hidden):
+        layers = []
+        in_layer = in_shape
+
+        # Add hidden layers
+        for hidden_layer in hidden:
+            layers.append(nn.Linear(in_layer,hidden_layer))
+            layers.append(nn.Dropout(self.dropout_rate))
+            layers.append(nn.BatchNorm1d(hidden_layer))
+            layers.append(nn.LeakyReLU())
+            in_layer = hidden_layer
+
+        # Add the output layer
+        layers.append(nn.Linear(in_layer, out_shape))
+        # layers.append(nn.Tanh())
+
+        return nn.Sequential(*layers)
+    def reset_parameters(self):
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.normal_(m.weight, mean=0, std=1.0)
+    def print_weight(self):
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                print(m.weight)
+
+
+
 
 
 # net = Net()

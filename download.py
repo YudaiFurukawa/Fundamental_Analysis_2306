@@ -27,7 +27,7 @@ dir = 'C:/Users/yften/OneDrive/Investing/tempFiles/'
 #--- Morningstar ---#
 reportTypes = ['is', 'bs', 'cf']
 # reportTypes = []
-tickers = ['7203.T','F'] #
+tickers = ['BECN','DOOR','JELD'] 
 nonUSTickers = []
 # periods = ['12']
 periods = ['12', '3']
@@ -39,13 +39,14 @@ class Download3():
         self.tickers = tickers
         self.nonUSTickers = nonUSTickers
         self.reportTypes = reportTypes
-        self.reportType_dict = {'is':'income-statement','bs':'balance-sheet-statement','cf':'cash-flow-statement'}
+        self.reportType_dict = {'is':'income-statement','bs':'balance-sheet-statement','cf':'cash-flow-statement','kr':'ratios'}
         # self.key_order_dict = {'is':['date','Revenue','Revenue Growth','Cost of Revenue','Gross Profit','R&D Expenses','SG&A Expense','Operating Expenses','Operating Income','Interest Expense','Earnings before Tax','Income Tax Expense','Net Income - Non-Controlling int','Net Income - Discontinued ops','Net Income','Preferred Dividends','Net Income Com','EPS','EPS Diluted','Weighted Average Shs Out','Weighted Average Shs Out (Dil)','Dividend per Share','Gross Margin','EBITDA Margin','EBIT Margin','Profit Margin','Free Cash Flow margin','EBITDA','EBIT','Consolidated Income','Earnings Before Tax Margin','Net Profit Margin'],
         #                        'bs':['date','Cash and cash equivalents','Short-term investments','Cash and short-term investments','Receivables','Inventories','Total current assets','Property','Goodwill and Intangible Assets','Long-term investments','Tax assets','Total non-current assets','Total assets','Payables','Short-term debt','Total current liabilities','Long-term debt','Total debt','Deferred revenue','Tax Liabilities','Deposit Liabilities','Total non-current liabilities','Total liabilities','Other comprehensive income','Retained earnings (deficit)','Total shareholders equity','Investments','Net Debt','Other Assets','Other Liabilities'],
         #                        'cf':['date','Depreciation & Amortization','Stock-based compensation','Operating Cash Flow','Capital Expenditure','Acquisitions and disposals','Investment purchases and sales','Investing Cash flow','Issuance (repayment) of debt','Issuance (buybacks) of shares','Dividend payments','Financing Cash Flow','Effect of forex changes on cash','Net cash flow / Change in cash','Free Cash Flow','Net Cash/Marketcap']}
         self.key_order_dict = {'is':["date","revenue","costOfRevenue","grossProfit","researchAndDevelopmentExpenses","generalAndAdministrativeExpenses","sellingAndMarketingExpenses","sellingGeneralAndAdministrativeExpenses","otherExpenses","operatingExpenses","costAndExpenses","operatingIncome","interestIncome","interestExpense","depreciationAndAmortization","incomeBeforeTax","incomeTaxExpense","totalOtherIncomeExpensesNet","netIncome","eps","epsdiluted","weightedAverageShsOut","weightedAverageShsOutDil","ebitdaratio","incomeBeforeTaxRatio","grossProfitRatio","netIncomeRatio","operatingIncomeRatio","ebitda"],
                                'bs':["date","cashAndCashEquivalents","shortTermInvestments","cashAndShortTermInvestments","netReceivables","inventory","otherCurrentAssets","totalCurrentAssets","propertyPlantEquipmentNet","goodwill","intangibleAssets","goodwillAndIntangibleAssets","longTermInvestments","taxAssets","otherNonCurrentAssets","totalNonCurrentAssets","otherAssets","totalAssets","accountPayables","shortTermDebt","deferredRevenue","otherCurrentLiabilities","taxPayables","totalCurrentLiabilities","longTermDebt","deferredRevenueNonCurrent","deferredTaxLiabilitiesNonCurrent","otherNonCurrentLiabilities","totalNonCurrentLiabilities","otherLiabilities","capitalLeaseObligations","totalDebt","netDebt","totalLiabilities","preferredStock","commonStock","retainedEarnings","accumulatedOtherComprehensiveIncomeLoss","othertotalStockholdersEquity","totalStockholdersEquity","totalLiabilitiesAndStockholdersEquity","minorityInterest","totalEquity","totalLiabilitiesAndTotalEquity","totalInvestments"],
-                               'cf':["date","netIncome","depreciationAndAmortization","deferredIncomeTax","stockBasedCompensation","changeInWorkingCapital","accountsReceivables","inventory","accountsPayables","otherWorkingCapital","otherNonCashItems","netCashProvidedByOperatingActivities","investmentsInPropertyPlantAndEquipment","acquisitionsNet","purchasesOfInvestments","salesMaturitiesOfInvestments","otherInvestingActivites","netCashUsedForInvestingActivites","debtRepayment","commonStockIssued","commonStockRepurchased","dividendsPaid","otherFinancingActivites","netCashUsedProvidedByFinancingActivities","effectOfForexChangesOnCash","netChangeInCash","freeCashFlow","cashAtEndOfPeriod","cashAtBeginningOfPeriod","operatingCashFlow","capitalExpenditure"]}
+                               'cf':["date","netIncome","depreciationAndAmortization","deferredIncomeTax","stockBasedCompensation","changeInWorkingCapital","accountsReceivables","inventory","accountsPayables","otherWorkingCapital","otherNonCashItems","netCashProvidedByOperatingActivities","investmentsInPropertyPlantAndEquipment","acquisitionsNet","purchasesOfInvestments","salesMaturitiesOfInvestments","otherInvestingActivites","netCashUsedForInvestingActivites","debtRepayment","commonStockIssued","commonStockRepurchased","dividendsPaid","otherFinancingActivites","netCashUsedProvidedByFinancingActivities","effectOfForexChangesOnCash","netChangeInCash","freeCashFlow","cashAtEndOfPeriod","cashAtBeginningOfPeriod","operatingCashFlow","capitalExpenditure"],
+                               'kr':['date','currentRatio','quickRatio','cashRatio','daysOfSalesOutstanding','daysOfInventoryOutstanding','operatingCycle','daysOfPayablesOutstanding','cashConversionCycle','grossProfitMargin','operatingProfitMargin','pretaxProfitMargin','netProfitMargin','effectiveTaxRate','returnOnAssets','returnOnEquity','returnOnCapitalEmployed','netIncomePerEBT','ebtPerEbit','ebitPerRevenue','debtRatio','debtEquityRatio','longTermDebtToCapitalization','totalDebtToCapitalization','interestCoverage','cashFlowToDebtRatio','companyEquityMultiplier','receivablesTurnover','payablesTurnover','inventoryTurnover','fixedAssetTurnover','assetTurnover','operatingCashFlowPerShare','freeCashFlowPerShare','cashPerShare','payoutRatio','operatingCashFlowSalesRatio','freeCashFlowOperatingCashFlowRatio','cashFlowCoverageRatios','shortTermCoverageRatios','capitalExpenditureCoverageRatio','dividendPaidAndCapexCoverageRatio','dividendPayoutRatio','priceBookValueRatio','priceToBookRatio','priceToSalesRatio','priceEarningsRatio','priceToFreeCashFlowsRatio','priceToOperatingCashFlowsRatio','priceCashFlowRatio','priceEarningsToGrowthRatio','priceSalesRatio','dividendYield','enterpriseValueMultiple','priceFairValue']}
 
         self.s = requests.session()
         self.headers = {'Referer': 'http://financials.morningstar.com/'}
@@ -61,7 +62,7 @@ class Download3():
             tmp_ticker = ticker
             for reportType in self.reportTypes:
                 print(ticker, reportType)
-                if reportType == 'kr':
+                if reportType == 'test': #'kr': # not using as getting ratios from FMP
                     self.download_KR(ticker)
                     # url = 'https://financials.morningstar.com/finan/ajax/exportKR2CSV.html?t=' + ticker
                     # req = self.s.get(url, headers=self.headers)
@@ -199,7 +200,6 @@ class download_yahooFinance(): # Not usable anymore?
     def get_now_epoch(self):
         # @see https://www.linuxquestions.org/questions/programming-9/python-datetime-to-epoch-4175520007/#post5244109
         return int(time.time())
-
 if __name__ == "__main__":
     Download3().main()
     # Download3().download_KR('MITSF')
